@@ -1,0 +1,17 @@
+// 文件名: stcp_server.h
+//
+// 描述: 这个文件包含服务器状态定义, 一些重要的数据结构和服务器STCP套接字接口定义. 你需要实现所有这些接口.
+//
+// 创建日期: 2013年1月
+//
+
+#ifndef STCPSERVER_H
+#define STCPSERVER_H
+
+#include <pthread.h>
+#include "../common/seg.h"
+#include "../common/constants.h"
+
+#define TABSIZE 100
+
+//

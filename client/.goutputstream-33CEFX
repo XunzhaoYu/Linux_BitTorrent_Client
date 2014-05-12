@@ -1,0 +1,55 @@
+//文件名: client/stcp_client.c
+//
+//描述: 这个文件包含STCP客户端接口实现 
+//
+//创建日期: 2013年1月
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/select.h>
+#include <assert.h>
+#include <strings.h>
+#include <unistd.h>
+#include <sys/time.h>
+#include <time.h>
+#include <pthread.h>
+#include "../topology/topology.h"
+#include "stcp_client.h"
+#include "../common/seg.h"
+
+//声明tcbtable为全局变量
+client_tcb_t* clientTcbTab[MAX_TRANSPORT_CONNECTIONS];
+//声明到SIP进程的TCP连接为全局变量
+int sip_conn;
+
+/*********************************************************************/
+//
+//STCP API实现
+//
+/*********************************************************************/
+
+// 这个函数初始化TCB表, 将所有条目标记为NULL.  
+// 它还针对TCP套接字描述符conn初始化一个STCP层的全局变量, 该变量作为sip_sendseg和sip_recvseg的输入参数.
+// 最后, 这个函数启动seghandler线程来处理进入的STCP段. 客户端只有一个seghandler.
+void stcp_client_init(int conn) 
+{
+    	memset(clientTcbTab,0,sizeof(clientTcbTab));
+  	sip_conn = conn;
+  	if(pthread_create(&handler,NULL,seghandler,NULL))
+  	{
+		printf("ERROR:in stcp_client_init()!\n");
+		exit(-1);	
+  	}
+  	return;
+}
+
+// 这个函数查找客户端TCB表以找到第一个NULL条目, 然后使用malloc()为该条目创建一个新的TCB条目.
+// 该TCB中的所有字段都被初始化. 例如, TCB state被设置为CLOSED，客户端端口被设置为函数调用参数client_port. 
+// TCB表中条目的索引号应作为客户端的新套接字ID被这个函数返回, 它用于标识客户端的连接. 
+// 如果TCB表中没有条目可用, 这个函数返回-1.
+int stcp_client_sock(unsigned int client_port) 
+{
+  	int index = 0;
+  	//
