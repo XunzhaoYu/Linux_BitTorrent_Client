@@ -127,13 +127,13 @@ int main() {
     char mydata[6] = "hello";
 	int i;
 	for(i=0;i<5;i++){
-      	stcp_client_send(sockfd, mydata, 6);
+      	stcp_send(sockfd, mydata, 6);
 		printf("send string:%s to connection 1\n",mydata);	
       	}
 	//通过第二个连接发送字符串
     char mydata2[7] = "byebye";
 	for(i=0;i<5;i++){
-      	stcp_client_send(sockfd2, mydata2, 7);
+      	stcp_send(sockfd2, mydata2, 7);
 		printf("send string:%s to connection 2\n",mydata2);	
       	}
 

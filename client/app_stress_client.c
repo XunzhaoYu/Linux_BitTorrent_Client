@@ -121,8 +121,8 @@ int main() {
 	fread(buffer,fileLen,1,f);
 	fclose(f);
 	//首先发送文件长度, 然后发送整个文件.
-	stcp_client_send(sockfd,&fileLen,sizeof(int));
-    stcp_client_send(sockfd, buffer, fileLen);
+	stcp_send(sockfd,&fileLen,sizeof(int));
+    	stcp_send(sockfd, buffer, fileLen);
 	free(buffer);
 	//等待一段时间, 然后关闭连接.
 	sleep(WAITTIME);

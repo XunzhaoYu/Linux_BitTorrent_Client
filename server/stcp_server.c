@@ -1,8 +1,8 @@
-//ÎÄ¼şÃû: server/stcp_server.c
+//ÃÃ„Å’Ã¾ÃƒÃ»: server/stcp_server.c
 //
-//ÃèÊö: Õâ¸öÎÄ¼ş°üº¬STCP·şÎñÆ÷½Ó¿ÚÊµÏÖ. 
+//ÃƒÃ¨ÃŠÃ¶: Ã•Ã¢Å¾Ã¶ÃÃ„Å’Ã¾Â°Ã¼ÂºÂ¬STCPÂ·Ã¾ÃÃ±Ã†Ã·Å“Ã“Â¿ÃšÃŠÂµÃÃ–. 
 //
-//´´½¨ÈÕÆÚ: 2013Äê1ÔÂ
+//Å½Å½Å“Å¡ÃˆÃ•Ã†Ãš: 2013Ã„Ãª1Ã”Ã‚
 
 #include <stdlib.h>
 #include <string.h>
@@ -21,13 +21,13 @@
 
 /*********************************************************************/
 //
-//STCP APIÊµÏÖ
+//STCP APIÃŠÂµÃÃ–
 //
 /*********************************************************************/
 
-// Õâ¸öº¯Êı³õÊ¼»¯TCB±í, ½«ËùÓĞÌõÄ¿±ê¼ÇÎªNULL. Ëü»¹Õë¶ÔTCPÌ×½Ó×ÖÃèÊö·ûconn³õÊ¼»¯Ò»¸öSTCP²ãµÄÈ«¾Ö±äÁ¿, 
-// ¸Ã±äÁ¿×÷Îªsip_sendsegºÍsip_recvsegµÄÊäÈë²ÎÊı. ×îºó, Õâ¸öº¯ÊıÆô¶¯seghandlerÏß³ÌÀ´´¦Àí½øÈëµÄSTCP¶Î.
-// ·şÎñÆ÷Ö»ÓĞÒ»¸öseghandler.
+// Ã•Ã¢Å¾Ã¶ÂºÂ¯ÃŠÃ½Â³ÃµÃŠÅ’Â»Â¯TCBÂ±Ã­, Å“Â«Ã‹Ã¹Ã“ÃÃŒÃµÃ„Â¿Â±ÃªÅ’Ã‡ÃÂªNULL. Ã‹Ã¼Â»Â¹Ã•Ã«Â¶Ã”TCPÃŒÃ—Å“Ã“Ã—Ã–ÃƒÃ¨ÃŠÃ¶Â·Ã»connÂ³ÃµÃŠÅ’Â»Â¯Ã’Â»Å¾Ã¶STCPÂ²Ã£ÂµÃ„ÃˆÂ«Å¸Ã–Â±Ã¤ÃÂ¿, 
+// Å¾ÃƒÂ±Ã¤ÃÂ¿Ã—Ã·ÃÂªsip_sendsegÂºÃsip_recvsegÂµÃ„ÃŠÃ¤ÃˆÃ«Â²ÃÃŠÃ½. Ã—Ã®ÂºÃ³, Ã•Ã¢Å¾Ã¶ÂºÂ¯ÃŠÃ½Ã†Ã´Â¶Â¯seghandlerÃÃŸÂ³ÃŒÃ€Å½Å½Å Ã€Ã­Å“Ã¸ÃˆÃ«ÂµÃ„STCPÂ¶Ã.
+// Â·Ã¾ÃÃ±Ã†Ã·Ã–Â»Ã“ÃÃ’Â»Å¾Ã¶seghandler.
 void stcp_server_init(int conn) 
 {
 	memset(tcbTab,0,sizeof(tcbTab));
@@ -39,10 +39,10 @@ void stcp_server_init(int conn)
   	return;
 }
 
-// Õâ¸öº¯Êı²éÕÒ·şÎñÆ÷TCB±íÒÔÕÒµ½µÚÒ»¸öNULLÌõÄ¿, È»ºóÊ¹ÓÃmalloc()Îª¸ÃÌõÄ¿´´½¨Ò»¸öĞÂµÄTCBÌõÄ¿.
-// ¸ÃTCBÖĞµÄËùÓĞ×Ö¶Î¶¼±»³õÊ¼»¯, ÀıÈç, TCB state±»ÉèÖÃÎªCLOSED, ·şÎñÆ÷¶Ë¿Ú±»ÉèÖÃÎªº¯Êıµ÷ÓÃ²ÎÊıserver_port. 
-// TCB±íÖĞÌõÄ¿µÄË÷ÒıÓ¦×÷Îª·şÎñÆ÷µÄĞÂÌ×½Ó×ÖID±»Õâ¸öº¯Êı·µ»Ø, ËüÓÃÓÚ±êÊ¶·şÎñÆ÷¶ËµÄÁ¬½Ó. 
-// Èç¹ûTCB±íÖĞÃ»ÓĞÌõÄ¿¿ÉÓÃ, Õâ¸öº¯Êı·µ»Ø-1.
+// Ã•Ã¢Å¾Ã¶ÂºÂ¯ÃŠÃ½Â²Ã©Ã•Ã’Â·Ã¾ÃÃ±Ã†Ã·TCBÂ±Ã­Ã’Ã”Ã•Ã’ÂµÅ“ÂµÃšÃ’Â»Å¾Ã¶NULLÃŒÃµÃ„Â¿, ÃˆÂ»ÂºÃ³ÃŠÂ¹Ã“Ãƒmalloc()ÃÂªÅ¾ÃƒÃŒÃµÃ„Â¿Å½Å½Å“Å¡Ã’Â»Å¾Ã¶ÃÃ‚ÂµÃ„TCBÃŒÃµÃ„Â¿.
+// Å¾ÃƒTCBÃ–ÃÂµÃ„Ã‹Ã¹Ã“ÃÃ—Ã–Â¶ÃÂ¶Å’Â±Â»Â³ÃµÃŠÅ’Â»Â¯, Ã€Ã½ÃˆÃ§, TCB stateÂ±Â»Ã‰Ã¨Ã–ÃƒÃÂªCLOSED, Â·Ã¾ÃÃ±Ã†Ã·Â¶Ã‹Â¿ÃšÂ±Â»Ã‰Ã¨Ã–ÃƒÃÂªÂºÂ¯ÃŠÃ½ÂµÃ·Ã“ÃƒÂ²ÃÃŠÃ½server_port. 
+// TCBÂ±Ã­Ã–ÃÃŒÃµÃ„Â¿ÂµÃ„Ã‹Ã·Ã’Ã½Ã“Å Ã—Ã·ÃÂªÂ·Ã¾ÃÃ±Ã†Ã·ÂµÃ„ÃÃ‚ÃŒÃ—Å“Ã“Ã—Ã–IDÂ±Â»Ã•Ã¢Å¾Ã¶ÂºÂ¯ÃŠÃ½Â·ÂµÂ»Ã˜, Ã‹Ã¼Ã“ÃƒÃ“ÃšÂ±ÃªÃŠÂ¶Â·Ã¾ÃÃ±Ã†Ã·Â¶Ã‹ÂµÃ„ÃÂ¬Å“Ã“. 
+// ÃˆÃ§Â¹Ã»TCBÂ±Ã­Ã–ÃÃƒÂ»Ã“ÃÃŒÃµÃ„Â¿Â¿Ã‰Ã“Ãƒ, Ã•Ã¢Å¾Ã¶ÂºÂ¯ÃŠÃ½Â·ÂµÂ»Ã˜-1.
 int stcp_server_sock(unsigned int server_port) 
 {
 	int i;
@@ -60,18 +60,31 @@ int stcp_server_sock(unsigned int server_port)
 		p->server_nodeID=ip;
 		p->server_portNum=server_port;
 		p->state=CLOSED;
+
+		p->next_seqNum =rand()%65535;			        //æ–°æ®µå‡†å¤‡ä½¿ç”¨çš„ä¸‹ä¸€ä¸ªåºå· 
+		p->sendbufMutex = malloc(sizeof(pthread_mutex_t));	//å‘é€ç¼“å†²åŒºäº’æ–¥é‡
+		if(p->sendbufMutex==NULL){
+			printf("heap full!\n");
+			exit(-1);
+		}
+  		pthread_mutex_init(p->sendbufMutex,NULL);
+ 		p->sendBufHead = NULL; 	    				//å‘é€ç¼“å†²åŒºå¤´
+  		p->sendBufunSent = NULL;	    			//å‘é€ç¼“å†²åŒºä¸­çš„ç¬¬ä¸€ä¸ªæœªå‘é€æ®µ
+ 		p->sendBufTail = NULL;	    				//å‘é€ç¼“å†²åŒºå°¾
+ 		p->unAck_segNum = 0;            			//å·²å‘é€ä½†æœªæ”¶åˆ°ç¡®è®¤æ®µçš„æ•°é‡
+
 		p->recvBuf=malloc(RECEIVE_BUF_SIZE);
 		if(p->recvBuf==NULL){
 			printf("heap full!\n");
 			exit(-1);
 		}
 		p->usedBufLen=0;
-		p->bufMutex=malloc(sizeof(pthread_mutex_t));
-		if(p->bufMutex==NULL){
+		p->recvbufMutex=malloc(sizeof(pthread_mutex_t));
+		if(p->recvbufMutex==NULL){
 			printf("heap full!\n");
 			exit(-1);
 		}
-		pthread_mutex_init(p->bufMutex,NULL);
+		pthread_mutex_init(p->recvbufMutex,NULL);
 		tcbTab[i]=p;
 		break;
 	}
@@ -79,9 +92,9 @@ int stcp_server_sock(unsigned int server_port)
 	return i;
 }
 
-// Õâ¸öº¯ÊıÊ¹ÓÃsockfd»ñµÃTCBÖ¸Õë, ²¢½«Á¬½ÓµÄstate×ª»»ÎªLISTENING. ËüÈ»ºóÆô¶¯¶¨Ê±Æ÷½øÈëÃ¦µÈ´ıÖ±µ½TCB×´Ì¬×ª»»ÎªCONNECTED 
-// (µ±ÊÕµ½SYNÊ±, seghandler»á½øĞĞ×´Ì¬µÄ×ª»»). ¸Ãº¯ÊıÔÚÒ»¸öÎŞÇîÑ­»·ÖĞµÈ´ıTCBµÄstate×ª»»ÎªCONNECTED,  
-// µ±·¢ÉúÁË×ª»»Ê±, ¸Ãº¯Êı·µ»Ø1. Äã¿ÉÒÔÊ¹ÓÃ²»Í¬µÄ·½·¨À´ÊµÏÖÕâÖÖ×èÈûµÈ´ı.
+// Ã•Ã¢Å¾Ã¶ÂºÂ¯ÃŠÃ½ÃŠÂ¹Ã“ÃƒsockfdÂ»Ã±ÂµÃƒTCBÃ–Å¾Ã•Ã«, Â²Â¢Å“Â«ÃÂ¬Å“Ã“ÂµÃ„stateÃ—ÂªÂ»Â»ÃÂªLISTENING. Ã‹Ã¼ÃˆÂ»ÂºÃ³Ã†Ã´Â¶Â¯Â¶Å¡ÃŠÂ±Ã†Ã·Å“Ã¸ÃˆÃ«ÃƒÅ ÂµÃˆÅ½Ã½Ã–Â±ÂµÅ“TCBÃ—Å½ÃŒÂ¬Ã—ÂªÂ»Â»ÃÂªCONNECTED 
+// (ÂµÂ±ÃŠÃ•ÂµÅ“SYNÃŠÂ±, seghandlerÂ»Ã¡Å“Ã¸ÃÃÃ—Å½ÃŒÂ¬ÂµÃ„Ã—ÂªÂ»Â»). Å¾ÃƒÂºÂ¯ÃŠÃ½Ã”ÃšÃ’Â»Å¾Ã¶ÃÃÃ‡Ã®Ã‘Â­Â»Â·Ã–ÃÂµÃˆÅ½Ã½TCBÂµÃ„stateÃ—ÂªÂ»Â»ÃÂªCONNECTED,  
+// ÂµÂ±Â·Â¢Ã‰ÃºÃÃ‹Ã—ÂªÂ»Â»ÃŠÂ±, Å¾ÃƒÂºÂ¯ÃŠÃ½Â·ÂµÂ»Ã˜1. Ã„Ã£Â¿Ã‰Ã’Ã”ÃŠÂ¹Ã“ÃƒÂ²Â»ÃÂ¬ÂµÃ„Â·Å“Â·Å¡Ã€Å½ÃŠÂµÃÃ–Ã•Ã¢Ã–Ã–Ã—Ã¨ÃˆÃ»ÂµÃˆÅ½Ã½.
 int stcp_server_accept(int sockfd) 
 {
 	server_tcb_t* p=tcbTab[sockfd];
@@ -90,9 +103,9 @@ int stcp_server_accept(int sockfd)
 	return 1;
 }
 
-// ½ÓÊÕÀ´×ÔSTCP¿Í»§¶ËµÄÊı¾İ. Õâ¸öº¯ÊıÃ¿¸ôRECVBUF_POLLING_INTERVALÊ±¼ä
-// ¾Í²éÑ¯½ÓÊÕ»º³åÇø, Ö±µ½µÈ´ıµÄÊı¾İµ½´ï, ËüÈ»ºó´æ´¢Êı¾İ²¢·µ»Ø1. Èç¹ûÕâ¸öº¯ÊıÊ§°Ü, Ôò·µ»Ø-1.
-int stcp_server_recv(int sockfd, void* buf, unsigned int length) 
+// Å“Ã“ÃŠÃ•Ã€Å½Ã—Ã”STCPÂ¿ÃÂ»Â§Â¶Ã‹ÂµÃ„ÃŠÃ½Å¸Ã. Ã•Ã¢Å¾Ã¶ÂºÂ¯ÃŠÃ½ÃƒÂ¿Å¾Ã´RECVBUF_POLLING_INTERVALÃŠÂ±Å’Ã¤
+// Å¸ÃÂ²Ã©Ã‘Â¯Å“Ã“ÃŠÃ•Â»ÂºÂ³Ã¥Ã‡Ã¸, Ã–Â±ÂµÅ“ÂµÃˆÅ½Ã½ÂµÃ„ÃŠÃ½Å¸ÃÂµÅ“Å½Ã¯, Ã‹Ã¼ÃˆÂ»ÂºÃ³Å½Ã¦Å½Â¢ÃŠÃ½Å¸ÃÂ²Â¢Â·ÂµÂ»Ã˜1. ÃˆÃ§Â¹Ã»Ã•Ã¢Å¾Ã¶ÂºÂ¯ÃŠÃ½ÃŠÂ§Â°Ãœ, Ã”Ã²Â·ÂµÂ»Ã˜-1.
+int stcp_recv(int sockfd, void* buf, unsigned int length) 
 {
 	server_tcb_t* p=tcbTab[sockfd];
 	while(1){
@@ -106,17 +119,17 @@ int stcp_server_recv(int sockfd, void* buf, unsigned int length)
 			timeuse/=1000000;
     		}
 	}
-	pthread_mutex_lock(p->bufMutex);
+	pthread_mutex_lock(p->recvbufMutex);
 	memcpy(buf,p->recvBuf,length);
 	int i;
 	for(i=length;i<p->usedBufLen;i++) p->recvBuf[i-length]=p->recvBuf[i];
 	p->usedBufLen-=length;
-	pthread_mutex_unlock(p->bufMutex);
+	pthread_mutex_unlock(p->recvbufMutex);
 	return 1;
 }
 
-// Õâ¸öº¯Êıµ÷ÓÃfree()ÊÍ·ÅTCBÌõÄ¿. Ëü½«¸ÃÌõÄ¿±ê¼ÇÎªNULL, ³É¹¦Ê±(¼´Î»ÓÚÕıÈ·µÄ×´Ì¬)·µ»Ø1,
-// Ê§°ÜÊ±(¼´Î»ÓÚ´íÎóµÄ×´Ì¬)·µ»Ø-1.
+// Ã•Ã¢Å¾Ã¶ÂºÂ¯ÃŠÃ½ÂµÃ·Ã“Ãƒfree()ÃŠÃÂ·Ã…TCBÃŒÃµÃ„Â¿. Ã‹Ã¼Å“Â«Å¾ÃƒÃŒÃµÃ„Â¿Â±ÃªÅ’Ã‡ÃÂªNULL, Â³Ã‰Â¹Å ÃŠÂ±(Å’Å½ÃÂ»Ã“ÃšÃ•Ã½ÃˆÂ·ÂµÃ„Ã—Å½ÃŒÂ¬)Â·ÂµÂ»Ã˜1,
+// ÃŠÂ§Â°ÃœÃŠÂ±(Å’Å½ÃÂ»Ã“ÃšÅ½Ã­ÃÃ³ÂµÃ„Ã—Å½ÃŒÂ¬)Â·ÂµÂ»Ã˜-1.
 int stcp_server_close(int sockfd) 
 {
 	if(tcbTab[sockfd]==NULL){ 
@@ -124,7 +137,8 @@ int stcp_server_close(int sockfd)
 		return -1;
 	}
 	free(tcbTab[sockfd]->recvBuf);
-	free(tcbTab[sockfd]->bufMutex);
+	free(tcbTab[sockfd]->sendbufMutex);
+	free(tcbTab[sockfd]->recvbufMutex);
 	free(tcbTab[sockfd]);
 	tcbTab[sockfd]=NULL;
 	return 1;
@@ -139,9 +153,9 @@ void *closeWait(void* arg)
 	return NULL;
 }
 
-// ÕâÊÇÓÉstcp_server_init()Æô¶¯µÄÏß³Ì. Ëü´¦ÀíËùÓĞÀ´×Ô¿Í»§¶ËµÄ½øÈëÊı¾İ. seghandler±»Éè¼ÆÎªÒ»¸öµ÷ÓÃsip_recvseg()µÄÎŞÇîÑ­»·, 
-// Èç¹ûsip_recvseg()Ê§°Ü, ÔòËµÃ÷µ½SIP½ø³ÌµÄÁ¬½ÓÒÑ¹Ø±Õ, Ïß³Ì½«ÖÕÖ¹. ¸ù¾İSTCP¶Îµ½´ïÊ±Á¬½ÓËù´¦µÄ×´Ì¬, ¿ÉÒÔ²ÉÈ¡²»Í¬µÄ¶¯×÷.
-// Çë²é¿´·şÎñ¶ËFSMÒÔÁË½â¸ü¶àÏ¸½Ú.
+// Ã•Ã¢ÃŠÃ‡Ã“Ã‰stcp_server_init()Ã†Ã´Â¶Â¯ÂµÃ„ÃÃŸÂ³ÃŒ. Ã‹Ã¼Å½Å Ã€Ã­Ã‹Ã¹Ã“ÃÃ€Å½Ã—Ã”Â¿ÃÂ»Â§Â¶Ã‹ÂµÃ„Å“Ã¸ÃˆÃ«ÃŠÃ½Å¸Ã. seghandlerÂ±Â»Ã‰Ã¨Å’Ã†ÃÂªÃ’Â»Å¾Ã¶ÂµÃ·Ã“Ãƒsip_recvseg()ÂµÃ„ÃÃÃ‡Ã®Ã‘Â­Â»Â·, 
+// ÃˆÃ§Â¹Ã»sip_recvseg()ÃŠÂ§Â°Ãœ, Ã”Ã²Ã‹ÂµÃƒÃ·ÂµÅ“SIPÅ“Ã¸Â³ÃŒÂµÃ„ÃÂ¬Å“Ã“Ã’Ã‘Â¹Ã˜Â±Ã•, ÃÃŸÂ³ÃŒÅ“Â«Ã–Ã•Ã–Â¹. Å¾Ã¹Å¸ÃSTCPÂ¶ÃÂµÅ“Å½Ã¯ÃŠÂ±ÃÂ¬Å“Ã“Ã‹Ã¹Å½Å ÂµÃ„Ã—Å½ÃŒÂ¬, Â¿Ã‰Ã’Ã”Â²Ã‰ÃˆÂ¡Â²Â»ÃÂ¬ÂµÃ„Â¶Â¯Ã—Ã·.
+// Ã‡Ã«Â²Ã©Â¿Å½Â·Ã¾ÃÃ±Â¶Ã‹FSMÃ’Ã”ÃÃ‹Å“Ã¢Å¾Ã¼Â¶Ã ÃÅ¾Å“Ãš.
 void* seghandler(void* arg) 
 {
 	seg_t seg;
@@ -233,7 +247,7 @@ void serverFSM(server_tcb_t* t,stcp_hdr_t* h,char* data)
 				temp.header.dest_port=h->src_port;
 				temp.header.type=DATAACK;
 				if(t->expect_seqNum==h->seq_num){
-					pthread_mutex_lock(t->bufMutex);//lock
+					pthread_mutex_lock(t->recvbufMutex);//lock
 					if(t->usedBufLen+h->length<RECEIVE_BUF_SIZE){
 						memcpy((t->recvBuf+t->usedBufLen),data,h->length);
 						t->usedBufLen+=h->length;
@@ -242,13 +256,48 @@ void serverFSM(server_tcb_t* t,stcp_hdr_t* h,char* data)
 						sip_sendseg(sip_conn,t->client_nodeID,&temp);
 					}
 					else printf("recvBuffer full! packet loss!\n");
-					pthread_mutex_unlock(t->bufMutex);
+					pthread_mutex_unlock(t->recvbufMutex);
 				}
 				else{ 
 					temp.header.ack_num=t->expect_seqNum;
 					sip_sendseg(sip_conn,t->client_nodeID,&temp);
 				}
 			}
+			else if(h->type == DATAACK)//æ¥æ”¶åˆ°ack
+        		{
+				if(t->sendBufHead==NULL) break;
+				pthread_mutex_lock(t->sendbufMutex);
+	    			unsigned int affirm = h->ack_num;
+      			        segBuf_t *temp;
+				printf("1seq_num:%d , affirm:%d \n",t->sendBufHead->seg.header.seq_num,affirm);
+				printBuffer(t);
+	    			while(t->sendBufHead!=NULL&&t->sendBufHead->seg.header.seq_num < affirm)
+	    			{
+				//printf("2seq_num:%d , affirm:%d \n",t->sendBufHead->seg.header.seq_num,affirm);
+	 			        temp = t->sendBufHead;
+	      				t->sendBufHead = t->sendBufHead->next;
+	      				free(temp);
+					t->unAck_segNum--;
+	      				if(t->sendBufHead == NULL)//å¦‚æœç¼“å†²åŒºä¸­æ‰€æœ‰çš„æ®µéƒ½è¢«æˆåŠŸæ¥æ”¶
+	      				{
+						t->sendBufTail = NULL;
+						t->sendBufunSent=NULL;
+						printf("send buffer empty!\n");
+						pthread_join(timer,NULL);
+						break;
+				        }
+				}
+				struct timeval starttime;
+	    			while(t->sendBufunSent!=NULL&&t->unAck_segNum < GBN_WINDOW)
+				{
+     					sip_sendseg(sip_conn,t->server_nodeID,&t->sendBufunSent->seg);
+      					gettimeofday(&starttime,0);
+      					t->sendBufunSent->sentTime = starttime.tv_sec * 1000000 + starttime.tv_usec;
+      					t->unAck_segNum ++;
+      					t->sendBufunSent = t->sendBufunSent->next;
+    				}
+				pthread_mutex_unlock(t->sendbufMutex);
+          		}
 			else printf("ERROR:CONNECTED state fault!\n");
 			break;
 		case CLOSEWAIT:

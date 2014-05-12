@@ -80,15 +80,33 @@ int stcp_client_sock(unsigned int client_port)
 		return -1;
 	}
 	clientTcbTab[index]->client_nodeID=ip;
-	clientTcbTab[index]->client_portNum = client_port;//客户端端口号
-	clientTcbTab[index]->state = CLOSED;   	    //客户端状态
-	clientTcbTab[index]->next_seqNum =rand()%65535;		    //新段准备使用的下一个序号 
-  	clientTcbTab[index]->bufMutex = malloc(sizeof(pthread_mutex_t));	    //发送缓冲区互斥量
-  	pthread_mutex_init(clientTcbTab[index]->bufMutex,NULL);
- 	clientTcbTab[index]->sendBufHead = NULL; 	    //发送缓冲区头
-  	clientTcbTab[index]->sendBufunSent = NULL;	    //发送缓冲区中的第一个未发送段
- 	clientTcbTab[index]->sendBufTail = NULL;	    //发送缓冲区尾
- 	clientTcbTab[index]->unAck_segNum = 0;            //已发送但未收到确认段的数量  
+	clientTcbTab[index]->client_portNum = client_port;			//客户端端口号
+	clientTcbTab[index]->state = CLOSED;   	   				//客户端状态
+
+	clientTcbTab[index]->next_seqNum =rand()%65535;			        //新段准备使用的下一个序号 
+	clientTcbTab[index]->sendbufMutex = malloc(sizeof(pthread_mutex_t));	//发送缓冲区互斥量
+	if(clientTcbTab[index]->sendbufMutex==NULL){
+		printf("heap full!\n");
+		exit(-1);
+	}
+  	pthread_mutex_init(clientTcbTab[index]->sendbufMutex,NULL);
+ 	clientTcbTab[index]->sendBufHead = NULL; 	    			//发送缓冲区头
+  	clientTcbTab[index]->sendBufunSent = NULL;	    			//发送缓冲区中的第一个未发送段
+ 	clientTcbTab[index]->sendBufTail = NULL;	    			//发送缓冲区尾
+ 	clientTcbTab[index]->unAck_segNum = 0;            			//已发送但未收到确认段的数量
+
+	clientTcbTab[index]->recvBuf=malloc(RECEIVE_BUF_SIZE);
+		if(clientTcbTab[index]->recvBuf==NULL){
+			printf("heap full!\n");
+			exit(-1);
+		}
+	clientTcbTab[index]->usedBufLen=0;
+	clientTcbTab[index]->recvbufMutex=malloc(sizeof(pthread_mutex_t));
+	if(clientTcbTab[index]->recvbufMutex==NULL){
+		printf("heap full!\n");
+		exit(-1);
+	}
+	pthread_mutex_init(clientTcbTab[index]->recvbufMutex,NULL);
   	return index;
 }
 
@@ -155,7 +173,7 @@ int stcp_client_connect(int sockfd, int nodeID, unsigned int server_port)
 // ÒòÎªÓÃ»§ÊýŸÝ±»·ÖÆ¬Îª¹Ì¶šŽóÐ¡µÄSTCP¶Î, ËùÒÔÒ»ŽÎstcp_client_sendµ÷ÓÃ¿ÉÄÜ»á²úÉú¶àžösegBuf
 // ±»ÌíŒÓµœ·¢ËÍ»º³åÇøÁŽ±íÖÐ. Èç¹ûµ÷ÓÃ³É¹Š, ÊýŸÝŸÍ±»·ÅÈëTCB·¢ËÍ»º³åÇøÁŽ±íÖÐ, žùŸÝ»¬¶¯Ž°¿ÚµÄÇé¿ö,
 // ÊýŸÝ¿ÉÄÜ±»Ž«ÊäµœÍøÂçÖÐ, »òÔÚ¶ÓÁÐÖÐµÈŽýŽ«Êä.
-int stcp_client_send(int sockfd, void* data, unsigned int length) 
+int stcp_send(int sockfd, void* data, unsigned int length) 
 {
    client_tcb_t *tp;  
    tp = clientTcbTab[sockfd];
@@ -179,9 +197,9 @@ int stcp_client_send(int sockfd, void* data, unsigned int length)
  
  	segBuf->seg.header.seq_num = tp->next_seqNum;         	//序号
  	tp->next_seqNum = tp->next_seqNum + sendLen;
-  	segBuf->seg.header.ack_num = 0;         			//确认号，暂未改为全双工
+  	segBuf->seg.header.ack_num = 0;         		//确认号，暂未改为全双工
   	segBuf->seg.header.length = sendLen;   			//段数据长度
-  	segBuf->seg.header.type = DATA;     				//段类型 
+  	segBuf->seg.header.type = DATA;     			//段类型 
 
   	memcpy(segBuf->seg.data,(char *)data,sendLen);
 	data+=sendLen;
@@ -191,11 +209,11 @@ int stcp_client_send(int sockfd, void* data, unsigned int length)
   	struct timeval starttime;
   	//如果缓冲区为空，启动sendBuf_timer线程用于轮询超时
   	if(tp->sendBufHead == NULL){//插入缓冲区链表(作为头结点)
-		pthread_mutex_lock(tp->bufMutex);
+		pthread_mutex_lock(tp->sendbufMutex);
     		tp->sendBufHead = segBuf;
     		tp->sendBufunSent = segBuf;
     		tp->sendBufTail = segBuf; 
-		pthread_mutex_unlock(tp->bufMutex); 
+		pthread_mutex_unlock(tp->sendbufMutex); 
     		sip_sendseg(sip_conn,tp->server_nodeID,&segBuf->seg);
     		printf("client:发送报文... \n");
     		gettimeofday(&starttime,0);
@@ -206,7 +224,7 @@ int stcp_client_send(int sockfd, void* data, unsigned int length)
   	}
   	//如果缓冲区非空，从第一个未发送的段开始发送，直到发送但未被确认的段数达到GBN_WINDOW，或是直到已将缓冲区最后一个待发段发送出去
   	else{
-    		pthread_mutex_lock(tp->bufMutex);
+    		pthread_mutex_lock(tp->sendbufMutex);
     		tp->sendBufTail->next = segBuf;
     		tp->sendBufTail = segBuf; 
 		if(tp->sendBufunSent==NULL) tp->sendBufunSent=segBuf;
@@ -221,7 +239,7 @@ int stcp_client_send(int sockfd, void* data, unsigned int length)
       			if(tp->sendBufunSent == NULL)//已经发送完缓冲区的最后一个待发段
         			break;
     		}
-		pthread_mutex_unlock(tp->bufMutex);
+		pthread_mutex_unlock(tp->sendbufMutex);
   	}
 	rest-=sendLen;
   }
@@ -287,7 +305,11 @@ int stcp_client_close(int sockfd)
   tp = clientTcbTab[sockfd];
   if(tp == NULL)
     return -1;
+  free(tp->recvBuf);
+  free(tp->sendbufMutex);
+  free(tp->recvbufMutex);
   free(tp);
+
   tp = NULL;
   return 1;
 }
@@ -317,7 +339,7 @@ void *seghandler(void* arg) {
 	printf("ERROR:tcb not found!\n");
       else{
 	printf("get into fsm!\n");
-	clientFSM(tcb,hdr);
+	clientFSM(tcb,hdr,seg.data);
 	}
   }
   return 0;
@@ -336,9 +358,9 @@ void* sendBuf_timer(void* clienttcb)
 
   struct timeval starttime,endtime;
   unsigned int counttime = 0;
-  while(tp->sendBufHead !=NULL)//一直运行到缓冲区为空为止
+  while(tp->sendBufHead !=NULL)//一直运行到发送缓冲区为空为止
   {
-	//pthread_mutex_lock(tp->bufMutex);
+	//pthread_mutex_lock(tp->sendbufMutex);
     gettimeofday(&endtime,0);
     counttime = endtime.tv_sec * 1000000 + endtime.tv_usec;
 	int start=tp->sendBufHead->sentTime;
@@ -359,7 +381,7 @@ void* sendBuf_timer(void* clienttcb)
     }
     else//超时，开始回退N帧
     {
-	pthread_mutex_lock(tp->bufMutex);
+	pthread_mutex_lock(tp->sendbufMutex);
       printf("超时，开始回退N帧. \n");
       segBuf_t * temp;
       temp = tp->sendBufHead;
@@ -371,15 +393,15 @@ void* sendBuf_timer(void* clienttcb)
         temp->sentTime = starttime.tv_sec * 1000000 + starttime.tv_usec;
         temp = temp->next;
       }
-	pthread_mutex_unlock(tp->bufMutex);
+	pthread_mutex_unlock(tp->sendbufMutex);
     }  
-	//pthread_mutex_unlock(tp->bufMutex);
+	//pthread_mutex_unlock(tp->sendbufMutex);
   }
 	//pthread_detach(pthread_self());
   return NULL;
 }
 
-void clientFSM(client_tcb_t* t,stcp_hdr_t* h)
+void clientFSM(client_tcb_t* t,stcp_hdr_t* h,char* data)
 {
 	printf("fsm type:%d\n",h->type);
   switch(t->state)
@@ -396,10 +418,10 @@ void clientFSM(client_tcb_t* t,stcp_hdr_t* h)
 	  else printf("ERROR:client is waiting for SYNACK!\n");
     	  break;
     case CONNECTED:
-	  if(h->type == DATAACK)
+	  if(h->type == DATAACK)//接收到ack
           {
 		if(t->sendBufHead==NULL) break;
-		pthread_mutex_lock(t->bufMutex);
+		pthread_mutex_lock(t->sendbufMutex);
 	    unsigned int affirm = h->ack_num;
             segBuf_t *temp;
 		printf("1seq_num:%d , affirm:%d \n",t->sendBufHead->seg.header.seq_num,affirm);
@@ -428,8 +450,35 @@ void clientFSM(client_tcb_t* t,stcp_hdr_t* h)
       			t->unAck_segNum ++;
       			t->sendBufunSent = t->sendBufunSent->next;
     	    }
-		pthread_mutex_unlock(t->bufMutex);
+		pthread_mutex_unlock(t->sendbufMutex);
           }
+	  else if(h->type==DATA)//接收到data
+	  {	
+		seg_t temp;
+		temp.header.length=0;	
+		temp.header.src_port=h->dest_port;
+		temp.header.dest_port=h->src_port;
+		temp.header.type=DATAACK;
+		if(t->expect_seqNum==h->seq_num){
+			pthread_mutex_lock(t->recvbufMutex);//lock
+			if(t->usedBufLen+h->length<RECEIVE_BUF_SIZE)
+			{
+				memcpy((t->recvBuf+t->usedBufLen),data,h->length);
+				t->usedBufLen+=h->length;
+				t->expect_seqNum+=h->length;
+				temp.header.ack_num=t->expect_seqNum;
+				sip_sendseg(sip_conn,t->client_nodeID,&temp);
+			}
+			else 
+				printf("recvBuffer full! packet loss!\n");
+			pthread_mutex_unlock(t->recvbufMutex);
+		}
+		else
+		{ 
+			temp.header.ack_num=t->expect_seqNum;
+			sip_sendseg(sip_conn,t->client_nodeID,&temp);
+		}
+	  }
 	  else printf("ERROR:in CONNECTED;\n");
     	  break;
     case FINWAIT:

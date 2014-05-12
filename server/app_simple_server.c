@@ -106,12 +106,12 @@ int main() {
 	int i;
 	//接收来自第一个连接的字符串
 	for(i=0;i<5;i++) {
-		stcp_server_recv(sockfd,buf1,6);
+		stcp_recv(sockfd,buf1,6);
 		printf("recv string: %s from connection 1\n",buf1);
 	}
 	//接收来自第二个连接的字符串
 	for(i=0;i<5;i++) {
-		stcp_server_recv(sockfd2,buf2,7);
+		stcp_recv(sockfd2,buf2,7);
 		printf("recv string: %s from connection 2\n",buf2);
 	}
 

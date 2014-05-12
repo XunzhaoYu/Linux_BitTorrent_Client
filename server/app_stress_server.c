@@ -94,9 +94,9 @@ int main() {
 
 	//首先接收文件长度, 然后接收文件数据
 	int fileLen;
-	stcp_server_recv(sockfd,&fileLen,sizeof(int));
+	stcp_recv(sockfd,&fileLen,sizeof(int));
 	char* buf = (char*) malloc(fileLen);
-	stcp_server_recv(sockfd,buf,fileLen);
+	stcp_recv(sockfd,buf,fileLen);
 
 	//将接收到的文件数据保存到文件receivedtext.txt中
 	FILE* f;

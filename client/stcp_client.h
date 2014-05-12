@@ -1,9 +1,9 @@
 //
-// �ļ���: stcp_client.h
+// ÎÄŒþÃû: stcp_client.h
 //
-// ����: ����ļ������ͻ���״̬����, һЩ��Ҫ�����ݽṹ�Ϳͻ���STCP�׽��ֽӿڶ���. ����Ҫʵ��������Щ�ӿ�.
+// ÃèÊö: ÕâžöÎÄŒþ°üº¬¿Í»§¶Ë×ŽÌ¬¶šÒå, Ò»Ð©ÖØÒªµÄÊýŸÝœá¹¹ºÍ¿Í»§¶ËSTCPÌ×œÓ×ÖœÓ¿Ú¶šÒå. ÄãÐèÒªÊµÏÖËùÓÐÕâÐ©œÓ¿Ú.
 //
-// ��������: 2013��1��
+// ŽŽœšÈÕÆÚ: 2013Äê1ÔÂ
 //
 
 #ifndef STCPCLIENT_H
@@ -11,7 +11,7 @@
 #include <pthread.h>
 #include "../common/seg.h"
 
-//FSM��ʹ�õĿͻ���״̬
+//FSMÖÐÊ¹ÓÃµÄ¿Í»§¶Ë×ŽÌ¬
 #define	CLOSED 1
 #define	SYNSENT 2
 #define	CONNECTED 3
@@ -20,26 +20,32 @@
 
 #define ERRORIP "cannot find host ip"
 
-//�ڷ��ͻ����������д洢�εĵ�Ԫ.
+//ÔÚ·¢ËÍ»º³åÇøÁŽ±íÖÐŽæŽ¢¶ÎµÄµ¥Ôª.
 typedef struct segBuf {
         seg_t seg;
         unsigned int sentTime;
         struct segBuf* next;
 } segBuf_t;
 
-//�ͻ��˴�����ƿ�. һ��STCP���ӵĿͻ���ʹ��������ݽṹ��¼������Ϣ.   
+//¿Í»§¶ËŽ«Êä¿ØÖÆ¿é. Ò»žöSTCPÁ¬œÓµÄ¿Í»§¶ËÊ¹ÓÃÕâžöÊýŸÝœá¹¹ŒÇÂŒÁ¬œÓÐÅÏ¢.   
 typedef struct client_tcb {
-	unsigned int server_nodeID;        //�������ڵ�ID, ����IP��ַ
-	unsigned int server_portNum;       //�������˿ں�
-	unsigned int client_nodeID;     //�ͻ��˽ڵ�ID, ����IP��ַ
-	unsigned int client_portNum;    //�ͻ��˶˿ں�
-	unsigned int state;     	//�ͻ���״̬
-	unsigned int next_seqNum;       //�¶�׼��ʹ�õ���һ����� 
-	pthread_mutex_t* bufMutex;      //���ͻ�����������
-	segBuf_t* sendBufHead;          //���ͻ�����ͷ
-	segBuf_t* sendBufunSent;        //���ͻ������еĵ�һ��δ���Ͷ�
-	segBuf_t* sendBufTail;          //���ͻ�����β
-	unsigned int unAck_segNum;      //�ѷ��͵�δ�յ�ȷ�϶ε�����
+	unsigned int server_nodeID;     //服务器节点ID, 类似IP地址, 本实验未使用
+	unsigned int server_portNum;    //服务器端口号
+	unsigned int client_nodeID;     //客户端节点ID, 类似IP地址, 本实验未使用
+	unsigned int client_portNum;    //客户端端口号
+	unsigned int state;         	//服务器状态
+
+	unsigned int next_seqNum;       //下一个要发送的序号
+	segBuf_t* sendBufHead;          //指向发送缓冲区头部的指针
+	segBuf_t* sendBufunSent;        //指向发送缓冲区正要发送的段的位置的指针
+	segBuf_t* sendBufTail;          //指向发送缓冲区尾部的指针
+	unsigned int unAck_segNum;      //尚未接收到ack的段数目
+	pthread_mutex_t* sendbufMutex;  //指向一个互斥量的指针, 该互斥量用于对发送缓冲区的访问
+	
+	unsigned int expect_seqNum;     //期待接收的下一个数据序号	
+	char* recvBuf;                  //指向接收缓冲区的指针
+	unsigned int  usedBufLen;       //接收缓冲区中已接收数据的大小
+	pthread_mutex_t* recvbufMutex;  //指向一个互斥量的指针, 该互斥量用于对接收缓冲区的访问
 } client_tcb_t;
 
 client_tcb_t* clientTcbTab[MAX_TRANSPORT_CONNECTIONS];
@@ -47,91 +53,91 @@ int sip_conn;
 pthread_t handler,timer;
 
 //
-//  ���ڿͻ���Ӧ�ó����STCP�׽���API. 
+//  ÓÃÓÚ¿Í»§¶ËÓŠÓÃ³ÌÐòµÄSTCPÌ×œÓ×ÖAPI. 
 //  ===================================
 //
-//  �����������ṩ��ÿ���������õ�ԭ�Ͷ����ϸ��˵��, ����Щֻ��ָ���Ե�, ����ȫ���Ը����Լ����뷨����ƴ���.
+//  ÎÒÃÇÔÚÏÂÃæÌá¹©ÁËÃ¿žöº¯Êýµ÷ÓÃµÄÔ­ÐÍ¶šÒåºÍÏžœÚËµÃ÷, µ«ÕâÐ©Ö»ÊÇÖžµŒÐÔµÄ, ÄãÍêÈ«¿ÉÒÔžùŸÝ×ÔŒºµÄÏë·šÀŽÉèŒÆŽúÂë.
 //
-//  ע��: ��ʵ����Щ����ʱ, ����Ҫ����FSM�����п��ܵ�״̬, �����ʹ��switch�����ʵ��. 
+//  ×¢Òâ: µ±ÊµÏÖÕâÐ©º¯ÊýÊ±, ÄãÐèÒª¿ŒÂÇFSMÖÐËùÓÐ¿ÉÄÜµÄ×ŽÌ¬, Õâ¿ÉÒÔÊ¹ÓÃswitchÓïŸäÀŽÊµÏÖ. 
 //
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
 
 void stcp_client_init(int conn);
 
-// ���������ʼ��TCB��, ��������Ŀ���ΪNULL.  
-// �������TCP�׽���������conn��ʼ��һ��STCP���ȫ�ֱ���, �ñ�����Ϊsip_sendseg��sip_recvseg���������.
-// ���, �����������seghandler�߳������������STCP��. �ͻ���ֻ��һ��seghandler.
+// Õâžöº¯Êý³õÊŒ»¯TCB±í, œ«ËùÓÐÌõÄ¿±êŒÇÎªNULL.  
+// Ëü»¹Õë¶ÔTCPÌ×œÓ×ÖÃèÊö·ûconn³õÊŒ»¯Ò»žöSTCP²ãµÄÈ«ŸÖ±äÁ¿, žÃ±äÁ¿×÷Îªsip_sendsegºÍsip_recvsegµÄÊäÈë²ÎÊý.
+// ×îºó, Õâžöº¯ÊýÆô¶¯seghandlerÏß³ÌÀŽŽŠÀíœøÈëµÄSTCP¶Î. ¿Í»§¶ËÖ»ÓÐÒ»žöseghandler.
 //
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
 
 int stcp_client_sock(unsigned int client_port);
 
-// ����������ҿͻ���TCB�����ҵ���һ��NULL��Ŀ, Ȼ��ʹ��malloc()Ϊ����Ŀ����һ���µ�TCB��Ŀ.
-// ��TCB�е������ֶζ�����ʼ��. ����, TCB state������ΪCLOSED���ͻ��˶˿ڱ�����Ϊ�������ò���client_port. 
-// TCB������Ŀ��������Ӧ��Ϊ�ͻ��˵����׽���ID�������������, �����ڱ�ʶ�ͻ��˵�����. 
-// ���TCB����û����Ŀ����, �����������-1.
+// Õâžöº¯Êý²éÕÒ¿Í»§¶ËTCB±íÒÔÕÒµœµÚÒ»žöNULLÌõÄ¿, È»ºóÊ¹ÓÃmalloc()ÎªžÃÌõÄ¿ŽŽœšÒ»žöÐÂµÄTCBÌõÄ¿.
+// žÃTCBÖÐµÄËùÓÐ×Ö¶Î¶Œ±»³õÊŒ»¯. ÀýÈç, TCB state±»ÉèÖÃÎªCLOSED£¬¿Í»§¶Ë¶Ë¿Ú±»ÉèÖÃÎªº¯Êýµ÷ÓÃ²ÎÊýclient_port. 
+// TCB±íÖÐÌõÄ¿µÄË÷ÒýºÅÓŠ×÷Îª¿Í»§¶ËµÄÐÂÌ×œÓ×ÖID±»Õâžöº¯Êý·µ»Ø, ËüÓÃÓÚ±êÊ¶¿Í»§¶ËµÄÁ¬œÓ. 
+// Èç¹ûTCB±íÖÐÃ»ÓÐÌõÄ¿¿ÉÓÃ, Õâžöº¯Êý·µ»Ø-1.
 //
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
 
 int stcp_client_connect(int socked, int nodeID, unsigned int server_port);
 
-// ��������������ӷ�����. �����׽���ID, �������ڵ�ID�ͷ������Ķ˿ں���Ϊ�������. �׽���ID�����ҵ�TCB��Ŀ.  
-// �����������TCB�ķ������ڵ�ID�ͷ������˿ں�,  Ȼ��ʹ��sip_sendseg()����һ��SYN�θ�������.  
-// �ڷ�����SYN��֮��, һ����ʱ��������. �����SYNSEG_TIMEOUTʱ��֮��û���յ�SYNACK, SYN �ν����ش�. 
-// ����յ���, �ͷ���1. ����, ����ش�SYN�Ĵ�������SYN_MAX_RETRY, �ͽ�stateת����CLOSED, ������-1. 
+// Õâžöº¯ÊýÓÃÓÚÁ¬œÓ·þÎñÆ÷. ËüÒÔÌ×œÓ×ÖID, ·þÎñÆ÷œÚµãIDºÍ·þÎñÆ÷µÄ¶Ë¿ÚºÅ×÷ÎªÊäÈë²ÎÊý. Ì×œÓ×ÖIDÓÃÓÚÕÒµœTCBÌõÄ¿.  
+// Õâžöº¯ÊýÉèÖÃTCBµÄ·þÎñÆ÷œÚµãIDºÍ·þÎñÆ÷¶Ë¿ÚºÅ,  È»ºóÊ¹ÓÃsip_sendseg()·¢ËÍÒ»žöSYN¶Îžø·þÎñÆ÷.  
+// ÔÚ·¢ËÍÁËSYN¶ÎÖ®ºó, Ò»žö¶šÊ±Æ÷±»Æô¶¯. Èç¹ûÔÚSYNSEG_TIMEOUTÊ±ŒäÖ®ÄÚÃ»ÓÐÊÕµœSYNACK, SYN ¶Îœ«±»ÖØŽ«. 
+// Èç¹ûÊÕµœÁË, ŸÍ·µ»Ø1. ·ñÔò, Èç¹ûÖØŽ«SYNµÄŽÎÊýŽóÓÚSYN_MAX_RETRY, ŸÍœ«state×ª»»µœCLOSED, ²¢·µ»Ø-1. 
 //
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
 
-int stcp_client_send(int sockfd, void* data, unsigned int length);
+int stcp_send(int sockfd, void* data, unsigned int length);
 
-// �������ݸ�STCP������. �������ʹ���׽���ID�ҵ�TCB���е���Ŀ.
-// Ȼ����ʹ���ṩ�����ݴ���segBuf, �������ӵ����ͻ�����������.
-// ������ͻ������ڲ�������֮ǰΪ��, һ����Ϊsendbuf_timer���߳̾ͻ�����.
-// ÿ��SENDBUF_ROLLING_INTERVALʱ���ѯ���ͻ������Լ���Ƿ��г�ʱ�¼�����. 
-// ��������ڳɹ�ʱ����1�����򷵻�-1. 
-// stcp_client_send��һ����������������.
-// ��Ϊ�û����ݱ���ƬΪ�̶���С��STCP��, ����һ��stcp_client_send���ÿ��ܻ�������segBuf
-// �����ӵ����ͻ�����������. ������óɹ�, ���ݾͱ�����TCB���ͻ�����������, ���ݻ������ڵ����,
-// ���ݿ��ܱ����䵽������, ���ڶ����еȴ�����.
+// ·¢ËÍÊýŸÝžøSTCP·þÎñÆ÷. Õâžöº¯ÊýÊ¹ÓÃÌ×œÓ×ÖIDÕÒµœTCB±íÖÐµÄÌõÄ¿.
+// È»ºóËüÊ¹ÓÃÌá¹©µÄÊýŸÝŽŽœšsegBuf, œ«ËüžœŒÓµœ·¢ËÍ»º³åÇøÁŽ±íÖÐ.
+// Èç¹û·¢ËÍ»º³åÇøÔÚ²åÈëÊýŸÝÖ®Ç°Îª¿Õ, Ò»žöÃûÎªsendbuf_timerµÄÏß³ÌŸÍ»áÆô¶¯.
+// Ã¿žôSENDBUF_ROLLING_INTERVALÊ±Œä²éÑ¯·¢ËÍ»º³åÇøÒÔŒì²éÊÇ·ñÓÐ³¬Ê±ÊÂŒþ·¢Éú. 
+// Õâžöº¯ÊýÔÚ³É¹ŠÊ±·µ»Ø1£¬·ñÔò·µ»Ø-1. 
+// stcp_client_sendÊÇÒ»žö·Ç×èÈûº¯Êýµ÷ÓÃ.
+// ÒòÎªÓÃ»§ÊýŸÝ±»·ÖÆ¬Îª¹Ì¶šŽóÐ¡µÄSTCP¶Î, ËùÒÔÒ»ŽÎstcp_client_sendµ÷ÓÃ¿ÉÄÜ»á²úÉú¶àžösegBuf
+// ±»ÌíŒÓµœ·¢ËÍ»º³åÇøÁŽ±íÖÐ. Èç¹ûµ÷ÓÃ³É¹Š, ÊýŸÝŸÍ±»·ÅÈëTCB·¢ËÍ»º³åÇøÁŽ±íÖÐ, žùŸÝ»¬¶¯Ž°¿ÚµÄÇé¿ö,
+// ÊýŸÝ¿ÉÄÜ±»Ž«ÊäµœÍøÂçÖÐ, »òÔÚ¶ÓÁÐÖÐµÈŽýŽ«Êä.
 //
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
 
 int stcp_client_disconnect(int sockfd);
 
-// ����������ڶϿ���������������. �����׽���ID��Ϊ�������. �׽���ID�����ҵ�TCB���е���Ŀ.  
-// �����������FIN�θ�������. �ڷ���FIN֮��, state��ת����FINWAIT, ������һ����ʱ��.
-// ��������ճ�ʱ֮ǰstateת����CLOSED, �����FINACK�ѱ��ɹ�����. ����, ����ھ���FIN_MAX_RETRY�γ���֮��,
-// state��ȻΪFINWAIT, state��ת����CLOSED, ������-1. 
+// Õâžöº¯ÊýÓÃÓÚ¶Ï¿ªµœ·þÎñÆ÷µÄÁ¬œÓ. ËüÒÔÌ×œÓ×ÖID×÷ÎªÊäÈë²ÎÊý. Ì×œÓ×ÖIDÓÃÓÚÕÒµœTCB±íÖÐµÄÌõÄ¿.  
+// Õâžöº¯Êý·¢ËÍFIN¶Îžø·þÎñÆ÷. ÔÚ·¢ËÍFINÖ®ºó, stateœ«×ª»»µœFINWAIT, ²¢Æô¶¯Ò»žö¶šÊ±Æ÷.
+// Èç¹ûÔÚ×îÖÕ³¬Ê±Ö®Ç°state×ª»»µœCLOSED, Ôò±íÃ÷FINACKÒÑ±»³É¹ŠœÓÊÕ. ·ñÔò, Èç¹ûÔÚŸ­¹ýFIN_MAX_RETRYŽÎ³¢ÊÔÖ®ºó,
+// stateÈÔÈ»ÎªFINWAIT, stateœ«×ª»»µœCLOSED, ²¢·µ»Ø-1. 
 //
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
 
 int stcp_client_close(int sockfd);
 
-// �����������free()�ͷ�TCB��Ŀ. ��������Ŀ���ΪNULL, �ɹ�ʱ(��λ����ȷ��״̬)����1,
-// ʧ��ʱ(��λ�ڴ����״̬)����-1.
+// Õâžöº¯Êýµ÷ÓÃfree()ÊÍ·ÅTCBÌõÄ¿. Ëüœ«žÃÌõÄ¿±êŒÇÎªNULL, ³É¹ŠÊ±(ŒŽÎ»ÓÚÕýÈ·µÄ×ŽÌ¬)·µ»Ø1,
+// Ê§°ÜÊ±(ŒŽÎ»ÓÚŽíÎóµÄ×ŽÌ¬)·µ»Ø-1.
 //
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
 
 void *seghandler(void* arg);
 
-// ������stcp_client_init()�������߳�. �������������Է������Ľ����. 
-// seghandler�����Ϊһ������sip_recvseg()������ѭ��. ���sip_recvseg()ʧ��, ��˵����SIP���̵������ѹر�,
-// �߳̽���ֹ. ����STCP�ε���ʱ����������״̬, ���Բ�ȡ��ͬ�Ķ���. ��鿴�ͻ���FSM���˽����ϸ��.
+// ÕâÊÇÓÉstcp_client_init()Æô¶¯µÄÏß³Ì. ËüŽŠÀíËùÓÐÀŽ×Ô·þÎñÆ÷µÄœøÈë¶Î. 
+// seghandler±»ÉèŒÆÎªÒ»žöµ÷ÓÃsip_recvseg()µÄÎÞÇîÑ­»·. Èç¹ûsip_recvseg()Ê§°Ü, ÔòËµÃ÷µœSIPœø³ÌµÄÁ¬œÓÒÑ¹Ø±Õ,
+// Ïß³Ìœ«ÖÕÖ¹. žùŸÝSTCP¶ÎµœŽïÊ±Á¬œÓËùŽŠµÄ×ŽÌ¬, ¿ÉÒÔ²ÉÈ¡²»Í¬µÄ¶¯×÷. Çë²é¿Ž¿Í»§¶ËFSMÒÔÁËœâžü¶àÏžœÚ.
 //
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //
 
 void* sendBuf_timer(void* clienttcb);
-//����̳߳�����ѯ���ͻ������Դ�����ʱ�¼�. ������ͻ������ǿ�, ��Ӧһֱ����.
-//���(��ǰʱ�� - ��һ���ѷ��͵�δ��ȷ�϶εķ���ʱ��) > DATA_TIMEOUT, �ͷ���һ�γ�ʱ�¼�.
-// ����ʱ�¼�����ʱ, ���·��������ѷ��͵�δ��ȷ�϶�. �����ͻ�����Ϊ��ʱ, ����߳̽���ֹ.
+//ÕâžöÏß³Ì³ÖÐøÂÖÑ¯·¢ËÍ»º³åÇøÒÔŽ¥·¢³¬Ê±ÊÂŒþ. Èç¹û·¢ËÍ»º³åÇø·Ç¿Õ, ËüÓŠÒ»Ö±ÔËÐÐ.
+//Èç¹û(µ±Ç°Ê±Œä - µÚÒ»žöÒÑ·¢ËÍµ«ÎŽ±»È·ÈÏ¶ÎµÄ·¢ËÍÊ±Œä) > DATA_TIMEOUT, ŸÍ·¢ÉúÒ»ŽÎ³¬Ê±ÊÂŒþ.
+// µ±³¬Ê±ÊÂŒþ·¢ÉúÊ±, ÖØÐÂ·¢ËÍËùÓÐÒÑ·¢ËÍµ«ÎŽ±»È·ÈÏ¶Î. µ±·¢ËÍ»º³åÇøÎª¿ÕÊ±, ÕâžöÏß³Ìœ«ÖÕÖ¹.
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-void clientFSM(client_tcb_t* t,stcp_hdr_t* h);
+void clientFSM(client_tcb_t* t,stcp_hdr_t* h,char* data);
 #endif
