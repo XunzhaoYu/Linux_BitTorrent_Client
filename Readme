@@ -1,7 +1,27 @@
+Ways to compile and run:  
 
-你需要根据实验讲义的要求实现各个目录下源文件中的函数. 其中一些函数你已在前面的实验中实现过了. 
-client目录和server目录下提供的app_{simple/stress}_{client/server}.c文件用于测试.  
+Four machines are used: csnetlab_1, csnetlab_2, csnetlab_3, csnetlab_4  
 
+Use 'make' command to compile.  
+
+To run the program:  
+1. Start the overlap network progress:  
+	In each node, enter dictionary 'son' and run: ./son&  
+	The son progresses on 4 nodes should be started in 1 minute.  
+	Wait until you see 'waiting for connection from SIP process.' on all nodes.  
+2. Start the network progress:
+	In each node, enter dictionary 'sip' and run: ./sip&  
+	Wait until you see 'waiting for connection from STCP process.' on all nodes.
+3. Start the transformation layer and run the application:
+	In a node, enter dictionary 'server' and run ./app_simple_app或./app_stress_app  
+	In another node, enter dictionary 'client' and run ./app_simple_app or ./app_stress_app  
+
+To end the program:  
+Use 'kill -s 2 your_progress_id' to kill son progress and sip progress.  
+
+If the port number of this program has been occupied, the program will quit.
+
+----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- 
 编译和运行的方法:
 
 使用了四台主机: csnetlab_1, csnetlab_2, csnetlab_3, csnetlab_4
