@@ -3,7 +3,6 @@ Ways to compile and run:
 Four machines are used: csnetlab_1, csnetlab_2, csnetlab_3, csnetlab_4  
 
 Use 'make' command to compile.  
-
 To run the program:  
 1. Start the overlap network progress:  
 	In each node, enter dictionary 'son' and run: ./son&  
